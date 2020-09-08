@@ -8,7 +8,11 @@ import torch.nn as nn
 import numpy as np
 from tqdm import tqdm
 from torch.utils.data import Dataset,DataLoader,TensorDataset
-from transformers import AdamW,get_linear_schedule_with_warmup
+from transformers import(
+    BertConfig,
+    AdamW,
+    get_linear_schedule_with_warmup
+)
 
 from models import LinearClassifier
 
@@ -143,11 +147,11 @@ def evaluate(classifier_model,dataloader):
 
     return pred_labels,correct_labels,accuracy
 
-def main(batch_size,num_epochs,lr,train_input_dir,dev1_input_dir,result_save_dir):
+def main(batch_size,num_epochs,lr,bert_model_dir,train_input_dir,dev1_input_dir,result_save_dir):
     logger.info("batch_size: {} num_epochs: {} lr: {}".format(batch_size,num_epochs,lr))
 
     #Create dataloaders.
-    train_dataset=create_dataset(train_input_dir,num_examples=-1,num_options=20)
+    train_dataset=create_dataset(train_input_dir,num_examples=-1,num_options=4)
     train_dataloader=DataLoader(train_dataset,batch_size=batch_size,shuffle=True,drop_last=True)
 
     dev1_dataset=create_dataset(dev1_input_dir,num_examples=-1,num_options=20)
@@ -155,12 +159,22 @@ def main(batch_size,num_epochs,lr,train_input_dir,dev1_input_dir,result_save_dir
 
     #Create a classifier model.
     logger.info("Create a classifier model.")
-    classifier_model=LinearClassifier.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking")
+
+    classifier_model=None
+    if bert_model_dir=="USE_DEFAULT":
+        classifier_model=LinearClassifier.from_pretrained("cl-tohoku/bert-base-japanese-whole-word-masking")
+    else:
+        config_filepath=os.path.join(bert_model_dir,"bert_config.json")
+        bert_model_filepath=os.path.join(bert_model_dir,"pytorch_model.bin")
+
+        bert_config=BertConfig.from_pretrained(bert_model_dir)
+        classifier_model=LinearClassifier.from_pretrained(bert_model_filepath,config=bert_config)
+
     classifier_model.to(device)
 
     #Create an optimizer and a scheduler.
     optimizer=AdamW(classifier_model.parameters(),lr=lr,eps=1e-8)
-    total_steps = len(train_dataloader)*7*num_epochs
+    total_steps = len(train_dataloader)*num_epochs
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=total_steps
     )
@@ -201,6 +215,7 @@ if __name__=="__main__":
     parser.add_argument("--batch_size",type=int,default=4)
     parser.add_argument("--num_epochs",type=int,default=10)
     parser.add_argument("--lr",type=float,default=5e-5)
+    parser.add_argument("--bert_model_dir",type=str,default="USE_DEFAULT")
     parser.add_argument("--train_input_dir",type=str,default="~/EncodedCache/Train")
     parser.add_argument("--dev1_input_dir",type=str,default="~/EncodedCache/Dev1")
     parser.add_argument("--result_save_dir",type=str,default="./OutputDir/Linear")
@@ -211,6 +226,7 @@ if __name__=="__main__":
         args.batch_size,
         args.num_epochs,
         args.lr,
+        args.bert_model_dir,
         args.train_input_dir,
         args.dev1_input_dir,
         args.result_save_dir
