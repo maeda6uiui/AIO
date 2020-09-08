@@ -160,7 +160,7 @@ def main(batch_size,num_epochs,lr,train_input_dir,dev1_input_dir,result_save_dir
 
     #Create an optimizer and a scheduler.
     optimizer=AdamW(classifier_model.parameters(),lr=lr,eps=1e-8)
-    total_steps = len(train_dataloader) * num_epochs
+    total_steps = len(train_dataloader)*7*num_epochs
     scheduler = get_linear_schedule_with_warmup(
         optimizer, num_warmup_steps=0, num_training_steps=total_steps
     )
