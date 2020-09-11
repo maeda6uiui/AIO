@@ -8,7 +8,7 @@ class LinearClassifier(BertForMultipleChoice):
 
         self.classifier=nn.Sequential(
             #nn.Dropout(config.hidden_dropout_prob),
-            nn.Linear(config.hidden_size,1),
+            nn.Linear(config.hidden_size,1)
         )
 
         self.init_weights()
