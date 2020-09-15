@@ -127,10 +127,7 @@ def main(bert_vocab_filepath,example_filepath,context_filepath,cache_save_dir):
 
     #Tokenizer
     logger.info("Create a tokenizer from {}.".format(bert_vocab_filepath))
-    tokenizer = BertJapaneseTokenizer.from_pretrained(
-        bert_vocab_filepath,
-        mecab_kwargs={"mecab_option": "-d /usr/local/lib/mecab/dic/jumandic"}
-    )
+    tokenizer = BertJapaneseTokenizer.from_pretrained(bert_vocab_filepath)
 
     logger.info("Start loading examples from {}.".format(example_filepath))
     examples=load_examples(example_filepath)
