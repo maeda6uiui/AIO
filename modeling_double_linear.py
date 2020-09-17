@@ -198,6 +198,9 @@ def main(
     lc_model_1.load_state_dict(torch.load(finetuned_model_filepath_1,map_location=device))
     lc_model_2.load_state_dict(torch.load(finetuned_model_filepath_2,map_location=device))
 
+    lc_model_1.to(device)
+    lc_model_2.to(device)
+
     #Create an optimizer.
     optimizer=optim.AdamW(classifier_model.parameters(),lr=lr)
     
