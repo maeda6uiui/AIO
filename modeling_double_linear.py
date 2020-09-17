@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 from tqdm import tqdm
-from torch.utils.data import Dataset,DataLoader,TensorDataset
+from torch.utils.data import Dataset,DataLoader,TensorDataset,Sampler
 from transformers import BertConfig
 
 from models import LinearClassifier,DoubleLinearClassifier
@@ -27,6 +27,22 @@ logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.INFO)
 
 device=torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+class RandomSampler(Sampler):
+    def __init__(self, data_source):
+        self.data_source = data_source
+
+    def set_seed(self,seed):
+        self.seed = seed
+
+    def __iter__(self):
+        n = len(self.data_source)
+        indexes = list(range(n))
+        random.Random(self.seed).shuffle(indexes)
+        return iter(indexes)
+
+    def __len__(self):
+        return len(self.data_source)
 
 def create_dataset(input_dir,num_examples=-1,num_options=4):
     input_ids=torch.load(os.path.join(input_dir,"input_ids.pt"))
@@ -153,11 +169,13 @@ def main(
     #Create dataloaders.
     logger.info("Create train dataloader from {}.".format(train_input_dir_1))
     train_dataset_1=create_dataset(train_input_dir_1,num_examples=-1,num_options=20)
-    train_dataloader_1=DataLoader(train_dataset_1,batch_size=batch_size,shuffle=True,drop_last=True)
+    train_sampler_1=RandomSampler(train_dataset_1).set_seed(SEED)
+    train_dataloader_1=DataLoader(train_dataset_1,batch_size=batch_size,sampler=train_sampler_1,drop_last=True)
 
     logger.info("Create train dataloader from {}.".format(train_input_dir_2))
     train_dataset_2=create_dataset(train_input_dir_2,num_examples=-1,num_options=20)
-    train_dataloader_2=DataLoader(train_dataset_2,batch_size=batch_size,shuffle=True,drop_last=True)
+    train_sampler_2=RandomSampler(train_dataset_2).set_seed(SEED)
+    train_dataloader_2=DataLoader(train_dataset_2,batch_size=batch_size,sampler=train_sampler_2,drop_last=True)
 
     logger.info("Create dev1 dataloader from {}.".format(dev1_input_dir_1))
     dev1_dataset_1=create_dataset(dev1_input_dir_1,num_examples=-1,num_options=20)
