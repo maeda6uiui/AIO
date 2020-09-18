@@ -140,6 +140,10 @@ def evaluate(classifier_model,lc_model_1,lc_model_2,dataloader_1,dataloader_2):
                 "labels": batch_2[3].to(device),
             }
 
+            batch_size=bert_inputs_1["input_ids"].size(0)
+            for i in range(batch_size):
+                assert bert_inputs_1["labels"][i]==bert_inputs_2["labels"][i],"ラベルの値が不正です。"
+
             lc1_outputs=lc_model_1(**bert_inputs_1)
             lc2_outputs=lc_model_2(**bert_inputs_2)
 

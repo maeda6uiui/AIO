@@ -17,6 +17,10 @@ class DoubleLinearClassifier(nn.Module):
         super().__init__()
 
         self.classifier=nn.Sequential(
+            nn.Linear(2*num_options,2*num_options),
+            nn.LeakyReLU(0.2),
+            nn.Linear(2*num_options,2*num_options),
+            nn.LeakyReLU(0.2),
             nn.Linear(2*num_options,num_options)
         )
 
