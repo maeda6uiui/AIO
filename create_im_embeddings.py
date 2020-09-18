@@ -108,9 +108,13 @@ def create_im_embedding(pred_region,vgg16,fc_vgg16,fc_c):
     im_embedding=vgg16(region_tensor).to(device)
     im_embedding=fc_vgg16(im_embedding)
 
-    c=fc_c(c)
+    c_tensor=torch.empty(1,5,dtype=torch.float).to(device)
+    for i in range(5):
+        c_tensor[0,i]=c[i]
 
-    return im_embedding+c   #Add im_embedding and c. ref: ImageBERT
+    c_tensor=fc_c(c_tensor)
+
+    return im_embedding+c_tensor   #Add im_embedding and c. ref: ImageBERT
 
 def create_im_embeddings(pred_regions,vgg16,embedding_dim,fc_vgg16,fc_c):
     ret=torch.empty(0,embedding_dim,dtype=torch.float).to(device)
@@ -145,8 +149,8 @@ def main(im_base_dir,embedding_dim,embeddings_save_dir):
     vgg16.to(device)
     vgg16.eval()
 
-    fc_vgg16=nn.Linear(4096,embedding_dim)
-    fc_c=nn.Linear(5,embedding_dim)
+    fc_vgg16=nn.Linear(1000,embedding_dim).to(device)
+    fc_c=nn.Linear(5,embedding_dim).to(device)
 
     #Create image embeddings.
     for article_hash,im_dir in tqdm(articles.items()):
@@ -154,7 +158,7 @@ def main(im_base_dir,embedding_dim,embeddings_save_dir):
         im_embeddings=create_im_embeddings(pred_regions,vgg16,embedding_dim,fc_vgg16,fc_c)
 
         embeddings_save_filepath=os.path.join(embeddings_save_dir,article_hash+".pt")
-        torch.save(im_embeddings,embeddings_save_dir)
+        torch.save(im_embeddings,embeddings_save_filepath)
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser(description="AIO")
@@ -167,6 +171,6 @@ if __name__=="__main__":
 
     logger.info("im_base_dir: {}".format(args.im_base_dir))
     logger.info("embedding_dim: {}".format(args.embedding_dim))
-    logger.info("embeddings_save_dir: {}".format(args.features_save_dir))
+    logger.info("embeddings_save_dir: {}".format(args.embeddings_save_dir))
 
     main(args.im_base_dir,args.embedding_dim,args.embeddings_save_dir)
